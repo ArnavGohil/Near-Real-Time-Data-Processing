@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 import os
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from operators import stage_redshift
+from operators import func
 
+func.func()
 
 default_args = {
     'owner': 'ArnavGohil',
@@ -21,7 +22,7 @@ dag = DAG('Delhi_Covid_ETL',
           default_args=default_args,
           description='Final Project',
           max_active_runs=1,
-          schedule_interval='@hourly'
+          schedule_interval='@once'
         )
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
