@@ -143,3 +143,4 @@ def main(data_dict, **kwargs):
     url = getTweet(api)
     str = parseTweet(url)
     getValues(data_dict, str)
+    print(data_dict)

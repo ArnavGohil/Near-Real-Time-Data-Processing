@@ -24,9 +24,9 @@ dag = DAG('Delhi_Covid_ETL',
           schedule_interval='@once'
         )
 
+date = datetime.now()
 file = "{}-centers.json".format(date.strftime("%d-%m-%Y"))
 daily_data = dict()
-
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 

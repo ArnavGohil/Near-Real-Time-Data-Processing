@@ -58,4 +58,5 @@ def writeJSON(lis, file):
 
 def main(file_name, **kwargs):
     lis = getCenters
+    print(lis)
     writeJSON(lis, file_name)
