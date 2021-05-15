@@ -35,7 +35,7 @@ def getTweet(api):
     # Iterate and print tweets
     for tweet in tweets:
         media = tweet.entities.get('media', [])
-    	image_url = media[0]['media_url']
+    	# image_url = media[0]['media_url']
 
     return image_url
 
