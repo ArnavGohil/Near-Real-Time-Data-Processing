@@ -1,7 +1,7 @@
 import requests
 import datetime
 import json
-
+import os
 
 def getCenters():
     payload = {}
@@ -57,6 +57,5 @@ def writeJSON(lis, file):
 
 
 def main(file_name, **kwargs):
-    lis = getCenters
-    print(lis)
+    lis = getCenters()
     writeJSON(lis, file_name)

@@ -35,7 +35,7 @@ def getTweet(api):
     # Iterate and print tweets
     for tweet in tweets:
         media = tweet.entities.get('media', [])
-    	# image_url = media[0]['media_url']
+        image_url = media[0]['media_url']
 
     return image_url
 
@@ -139,8 +139,8 @@ def getValues(val, string):
 
 
 def main(data_dict, **kwargs):
+    print("Aur Bhai")
     api = initialise()
     url = getTweet(api)
     str = parseTweet(url)
     getValues(data_dict, str)
-    print(data_dict)

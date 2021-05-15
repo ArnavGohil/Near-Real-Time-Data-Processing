@@ -8,7 +8,7 @@ from operators import DailyData, VacData
 
 default_args = {
     'owner': 'ArnavGohil',
-    'start_date': datetime.now(),
+    'start_date': datetime.now() - timedelta(days=1),
     'depends_on_past': False,   
     'email': ['arnav.gohil04@gmail.com'],
     'email_on_failure': True,
@@ -45,8 +45,8 @@ put_data = DummyOperator(task_id='put_data',  dag=dag)
 get_centers = PythonOperator(
 	task_id='get_centers', 
 	dag=dag,
-	python_callable = DailyData.main,
-	op_kwargs={'file_name': file},)
+	python_callable = VacData.main,
+	op_kwargs={'file_name': file})
 
 
 put_centers = DummyOperator(task_id='put_centers',  dag=dag)
