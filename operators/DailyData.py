@@ -7,6 +7,7 @@ import datetime
 from PIL import Image
 import requests
 import io
+import json
 
 
 def initialise():
@@ -181,10 +182,12 @@ def cropMid(url , val):
 
 
 
-def main(data_dict, **kwargs):
+def main(file_name, **kwargs):
     api = initialise()
     url = getTweet(api)
     
+    data_dict = dict()
+
     str = parseTweet(url)
     getValues(data_dict, str)
     
@@ -198,4 +201,6 @@ def main(data_dict, **kwargs):
     data_dict['year'] = y.year
 
     print(data_dict)
+    with open(file_name, "w") as outfile:
+        json.dump(data_dict, outfile)
 

@@ -4,7 +4,7 @@ from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import PythonOperator
 from operators import DailyData, VacData
-from operators.PutVacCenters import PutCentersOperator
+from operators.PutData import PutToRedshiftOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 
 
@@ -28,6 +28,7 @@ dag = DAG('Delhi_Covid_ETL',
 
 date = datetime.now()
 file = "{}-centers.json".format(date.strftime("%d-%m-%Y"))
+file_data = "{}-data.json".format(date.strftime("%d-%m-%Y"))
 daily_data = dict()
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
@@ -37,20 +38,16 @@ get_data = PythonOperator(
 	task_id='get_data', 
 	dag=dag,
 	python_callable = DailyData.main,
-	op_kwargs={'data_dict': daily_data}
+	op_kwargs={'file_name': file_data}
 	)
 
-query = "INSERT INTO DATA " \
-        "VALUES({{day}},{{month}},{{year}},{{positive}},{{tests}},{{recovered}},{{deaths}},{{vaccinated}},{{first_dose}},{{second_dose}},{{active_cases}},{{zones}})"
 
-put_data = PostgresOperator(
+put_data = PutToRedshiftOperator(
 	task_id='put_data', 
 	dag=dag,
-	postgres_conn_id="redshift",
-	sql = query,
-	params = daily_data
-	)
-
+	redshift_conn_id="redshift",
+	file_name=file_data,
+	OP_name="data")
 
 get_centers = PythonOperator(
 	task_id='get_centers', 
@@ -59,11 +56,12 @@ get_centers = PythonOperator(
 	op_kwargs={'file_name': file})
 
 
-put_centers = PutCentersOperator(
+put_centers = PutToRedshiftOperator(
 	task_id='put_centers', 
 	dag=dag,
 	redshift_conn_id="redshift",
-	file_name= "22-05-2021-centers.json")
+	file_name=file,
+	OP_name="vac")
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
