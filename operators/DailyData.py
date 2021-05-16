@@ -4,6 +4,9 @@ import configparser
 from google.cloud import vision
 import re
 import datetime
+from PIL import Image
+import requests
+import io
 
 
 def initialise():
@@ -56,69 +59,7 @@ def parseTweet(image_url):
 
 
 def getValues(val, string):
-    y = datetime.datetime.now()
-    y -= datetime.timedelta(days=1)
     try:
-        # Date
-        match = (re.search("/ ", string))
-        i = int(match.end())
-        match = (re.search(")", string))
-        j = int(match.start())
-        print(string[i:j])
-        val['day'] = y.day
-        val['month'] = y.month
-        val['year'] = y.year
-
-        # +ve cases
-        i = string.find("Positive Cases", string.find("Positive Cases") + 1)
-        match = (re.search("Tests Conducted", string))
-        j = int(match.start())
-        val['positive'] = string[i + len("Positive Cases") + 1: j - 1]
-
-        # Tests
-        match = (re.search("Tests Conducted", string))
-        i = int(match.end())
-        match = (re.search("Positivity Rate", string))
-        j = int(match.start())
-        val['tests'] = string[i + 1:j - 1]
-
-        # Recovered
-        match = (re.search("%", string))
-        i = int(match.end())
-        match = (re.search("Deaths", string))
-        j = int(match.start())
-        val['recovered'] = string[i + 1:j - 1]
-
-        # Deaths
-        match = (re.search("Deaths", string))
-        i = int(match.end())
-        match = (re.search("COVID-19 Patient Management", string))
-        j = int(match.start())
-        val['deaths'] = string[i + 1:j - 1]
-
-        # Tot Vac
-        match = (re.search("Beneficiaries vaccinated in last 24 hours", string))
-        i = int(match.end())
-        match = (re.search("Beneficiaries vaccinated 1", string))
-        j = int(match.start())
-        val['vaccinated'] = string[i + 1:j - 1]
-
-        # 1st dose
-        match = (re.search("dose in last 24 hours", string))
-        i = int(match.end())
-        match = (re.search("Beneficiaries vaccinated 2", string))
-        j = int(match.start())
-        val['first_dose'] = string[i + 1:j - 1]
-
-        # 2nd dose
-        pat = "dose in last 24 hours"
-        pos = string.find(pat) + 1
-        p1 = string.find(pat, pos + 1)
-        i = p1 + len(pat)
-        match = (re.search("Cumulative beneficiaries vaccinated so far", string))
-        j = int(match.start())
-        val['second_dose'] = string[i + 1:j - 1]
-
         # Active Cases
         match = (re.search("Active Cases", string))
         i = int(match.end())
@@ -132,15 +73,129 @@ def getValues(val, string):
         match = (re.search("Calls received", string))
         j = int(match.start())
         val['zones'] = string[i:j - 1]
-
     except:
         print("Error caught")
         return None
 
 
+def getNum(str):
+    if len(str) == 0: return
+    s = ""
+    for char in str:
+        if char.isdigit():
+            s += char
+    if len(s) == 0: return
+    return int(s)
+
+
+def cropTop(url , val ):
+    im = Image.open(requests.get(url, stream=True).raw)
+
+    # Setting the points for cropped image
+    left = 500
+    top = 127
+    right = 700
+    bottom = 300
+
+    # Cropped image of above dimension
+    im1 = im.crop((left, top, right, bottom))
+
+
+    img_byte_arr = io.BytesIO()
+    im1.save(img_byte_arr, format='PNG')
+    img_byte_arr = img_byte_arr.getvalue()
+
+    image = vision.Image(content=img_byte_arr)
+
+    client = vision.ImageAnnotatorClient()
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+    string = ""
+    for text in texts:
+        string = text.description
+        break
+
+
+    l = 1
+    for word in string.split("\n"):
+        i = getNum(word)
+        if i == 24: continue
+        if l == 1 : val["positive"] = i
+        if l == 2 : val["tests"] = i
+        if l == 4 : val["recovered"] = i
+        if l == 5 : val["deaths"] = i
+        l+=1
+
+
+    if response.error.message:
+        raise Exception(
+            '{}\nFor more info on error messages, check: '
+            'https://cloud.google.com/apis/design/errors'.format(
+                response.error.message))
+
+
+def cropMid(url , val):
+    im = Image.open(requests.get(url, stream=True).raw)
+
+    # Setting the points for cropped image
+    left = 525
+    top = 590
+    right = 700
+    bottom = 750
+
+    # Cropped image of above dimension
+    im1 = im.crop((left, top, right, bottom))
+
+
+    img_byte_arr = io.BytesIO()
+    im1.save(img_byte_arr, format='PNG')
+    img_byte_arr = img_byte_arr.getvalue()
+
+    image = vision.Image(content=img_byte_arr)
+
+    client = vision.ImageAnnotatorClient()
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+
+    string = ""
+    for text in texts:
+        string = text.description
+        break
+
+    l = 1
+    for word in string.split("\n"):
+        i = getNum(word)
+        if i == 24: continue
+        if l == 1 : val["vaccinated"] = i
+        if l == 2 : val["first_dose"] = i
+        if l == 3 : val["second_dose"] = i
+        if l >= 4 : break
+        l+=1
+
+    if response.error.message:
+        raise Exception(
+            '{}\nFor more info on error messages, check: '
+            'https://cloud.google.com/apis/design/errors'.format(
+                response.error.message))
+
+
+
+
 def main(data_dict, **kwargs):
-    print("Aur Bhai")
     api = initialise()
     url = getTweet(api)
+    
     str = parseTweet(url)
     getValues(data_dict, str)
+    
+    cropTop(url ,data_dict)
+    cropMid(url ,data_dict)
+
+    y = datetime.datetime.now()
+    y -= datetime.timedelta(days=1)
+    data_dict['day'] = y.day
+    data_dict['month'] = y.month
+    data_dict['year'] = y.year
+
+    print(data_dict)
+
