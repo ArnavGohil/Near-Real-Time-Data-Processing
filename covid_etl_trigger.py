@@ -14,7 +14,7 @@ default_args = {
     'depends_on_past': False,   
     'email': ['arnav.gohil04@gmail.com'],
     'email_on_failure': True,
-    'email_on_retry': False,
+    'email_on_retry': True,
     'retries': 1,
     'catchup':False
 }
@@ -23,7 +23,7 @@ dag = DAG('Delhi_Covid_ETL',
           default_args=default_args,
           description='Near Real Time Data Processing',
           max_active_runs=1,
-          schedule_interval='@once'
+          schedule_interval='0 8 * * *'
         )
 
 date = datetime.now()
