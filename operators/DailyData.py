@@ -195,7 +195,7 @@ def main(file_name, **kwargs):
     cropMid(url ,data_dict)
 
     y = datetime.datetime.now()
-    y -= datetime.timedelta(days=1)
+    y -= datetime.timedelta(days=2)
     data_dict['day'] = y.day
     data_dict['month'] = y.month
     data_dict['year'] = y.year
